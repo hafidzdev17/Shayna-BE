@@ -2,10 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
+use App\Models\ProductGallery;
+use App\Http\Requests\ProductRequest;
+
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -13,7 +28,11 @@ class ProductController extends Controller
      */
     public function index()
     {
-        //
+        $items = Product::all();
+
+        return view('pages.products.index')->with([
+            'items' => $items
+        ]);
     }
 
     /**
@@ -23,7 +42,7 @@ class ProductController extends Controller
      */
     public function create()
     {
-        //
+        return view('pages.products.create');
     }
 
     /**
@@ -32,9 +51,13 @@ class ProductController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(ProductRequest $request)
     {
-        //
+        $data = $request->all();
+        $data['slug'] = Str::slug($request->name);
+
+        Product::create($data);
+        return redirect()->route('products.index');
     }
 
     /**
@@ -56,7 +79,11 @@ class ProductController extends Controller
      */
     public function edit($id)
     {
-        //
+        $item = Product::findOrFail($id);
+
+        return view('pages.products.edit')->with([
+            'item' => $item
+        ]);
     }
 
     /**
@@ -66,9 +93,15 @@ class ProductController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(ProductRequest $request, $id)
     {
-        //
+        $data = $request->all();
+        $data['slug'] = Str::slug($request->name);
+
+        $item = Product::findOrFail($id);
+        $item->update($data);
+
+        return redirect()->route('products.index');
     }
 
     /**
@@ -79,6 +112,24 @@ class ProductController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $item = Product::findOrFail($id);
+        $item->delete();
+
+        ProductGallery::where('products_id', $id)->delete();
+
+        return redirect()->route('products.index');
+    }
+
+    public function gallery(Request $request, $id)
+    {
+        $product = Product::findorFail($id);
+        $items = ProductGallery::with('product')
+            ->where('products_id', $id)
+            ->get();
+
+        return view('pages.products.gallery')->with([
+            'product' => $product,
+            'items' => $items
+        ]);
     }
 }
