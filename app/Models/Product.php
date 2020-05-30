@@ -13,10 +13,12 @@ class Product extends Model
         'name', 'type', 'description', 'price', 'slug', 'quantity'
     ];
 
-    protected $hidden = [];
+    protected $hidden = [
+        
+    ];
 
     public function galleries()
     {
-        return $this->hasMany(ProductGallery::class, 'products_id');
+        return $this->hasMany(ProductGallery::class,'products_id');
     }
 }
